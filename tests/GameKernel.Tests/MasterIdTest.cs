@@ -2,12 +2,12 @@ namespace GameKernel.Tests;
 
 public class MasterIdTest
 {
-    private enum ItemGroup : uint { Weapon = 1, Armor = 2, Accessory = 3 }
-    private enum CharacterGroup : byte { Hero = 0, Villain = 1 }
+    public enum ItemGroup : uint { Weapon = 1, Armor = 2, Accessory = 3 }
+    internal enum CharacterGroup : byte { Hero = 0 }
 
     // Enum name "VeryLongGroup" is 13 chars; formatted as "VeryLongGroup.0001" = 18 chars total,
     // exceeding the initial internal 16-char buffer and triggering buffer-doubling.
-    private enum VeryLongGroup : uint { VeryLongGroup = 1 }
+    internal enum VeryLongGroup : uint { VeryLongGroup = 1 }
 
     [Fact]
     public void Constructor_SetsGroupAndId()
@@ -25,86 +25,55 @@ public class MasterIdTest
         Assert.Equal(100u, id.Id);
     }
 
-    [Fact]
-    public void Equals_SameGroupAndId_ReturnsTrue()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 1u, true)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Armor, 1u, false)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 2u, false)]
+    public void Equals_WithVaryingGroupsAndIds(ItemGroup group1, uint id1, ItemGroup group2, uint id2, bool expected)
     {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        Assert.True(id1.Equals(id2));
+        var masterId1 = new MasterId<ItemGroup>(group1, id1);
+        var masterId2 = new MasterId<ItemGroup>(group2, id2);
+        Assert.Equal(expected, masterId1.Equals(masterId2));
     }
 
-    [Fact]
-    public void Equals_DifferentGroup_ReturnsFalse()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 1u, true)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 2u, false)]
+    public void EqualityOperator_WithSameOrDifferentValues(ItemGroup group1, uint id1, ItemGroup group2, uint id2, bool shouldBeEqual)
     {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Armor, 1u);
-        Assert.False(id1.Equals(id2));
+        var masterId1 = new MasterId<ItemGroup>(group1, id1);
+        var masterId2 = new MasterId<ItemGroup>(group2, id2);
+        Assert.Equal(shouldBeEqual, masterId1 == masterId2);
+        Assert.Equal(!shouldBeEqual, masterId1 != masterId2);
     }
 
-    [Fact]
-    public void Equals_DifferentId_ReturnsFalse()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 1u, 0)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Armor, 1u, -1)]
+    [InlineData(ItemGroup.Armor, 1u, ItemGroup.Weapon, 1u, 1)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Weapon, 2u, -1)]
+    [InlineData(ItemGroup.Weapon, 2u, ItemGroup.Weapon, 1u, 1)]
+    public void CompareTo_WithVaryingValues(ItemGroup group1, uint id1, ItemGroup group2, uint id2, int expectedComparison)
     {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 2u);
-        Assert.False(id1.Equals(id2));
+        var masterId1 = new MasterId<ItemGroup>(group1, id1);
+        var masterId2 = new MasterId<ItemGroup>(group2, id2);
+        var result = masterId1.CompareTo(masterId2);
+        if (expectedComparison == 0)
+            Assert.Equal(0, result);
+        else if (expectedComparison < 0)
+            Assert.True(result < 0);
+        else
+            Assert.True(result > 0);
     }
 
-    [Fact]
-    public void EqualityOperator_SameValues_ReturnsTrue()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 1u, "Weapon.0001")]
+    [InlineData(ItemGroup.Armor, 42u, "Armor.0042")]
+    [InlineData(ItemGroup.Accessory, 99u, "Accessory.0099")]
+    public void ToString_WithFormattedOutput(ItemGroup group, uint id, string expected)
     {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        Assert.True(id1 == id2);
-        Assert.False(id1 != id2);
-    }
-
-    [Fact]
-    public void InequalityOperator_DifferentValues_ReturnsTrue()
-    {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 2u);
-        Assert.True(id1 != id2);
-        Assert.False(id1 == id2);
-    }
-
-    [Fact]
-    public void CompareTo_EqualValues_ReturnsZero()
-    {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        Assert.Equal(0, id1.CompareTo(id2));
-    }
-
-    [Fact]
-    public void CompareTo_SmallerGroup_ReturnsNegative()
-    {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);   // Weapon = 1
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Armor, 1u);    // Armor = 2
-        Assert.True(id1.CompareTo(id2) < 0);
-        Assert.True(id2.CompareTo(id1) > 0);
-    }
-
-    [Fact]
-    public void CompareTo_SameGroup_SortsByIdWhenGroupsEqual()
-    {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 2u);
-        Assert.True(id1.CompareTo(id2) < 0);
-        Assert.True(id2.CompareTo(id1) > 0);
-    }
-
-    [Fact]
-    public void ToString_DefaultFormat_FormatsGroupAndId()
-    {
-        var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        Assert.Equal("Weapon.0001", id.ToString());
-    }
-
-    [Fact]
-    public void ToString_DefaultFormat_PadsIdToFourDigits()
-    {
-        var id = new MasterId<ItemGroup>(ItemGroup.Armor, 42u);
-        Assert.Equal("Armor.0042", id.ToString());
+        var masterId = new MasterId<ItemGroup>(group, id);
+        Assert.Equal(expected, masterId.ToString());
     }
 
     [Fact]
@@ -115,42 +84,27 @@ public class MasterIdTest
         Assert.Equal("Armor.42", result);
     }
 
-    [Fact]
-    public void TryFormat_SufficientBuffer_Succeeds()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 5u, 32, true)]
+    public void TryFormat_SufficientBuffer_Succeeds(ItemGroup group, uint id, int bufferSize, bool shouldSucceed)
     {
-        var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 5u);
-        var buffer = new char[32];
-        var result = id.TryFormat(buffer, out var written);
-        Assert.True(result);
-        Assert.Equal("Weapon.0005", new string(buffer, 0, written));
+        var masterId = new MasterId<ItemGroup>(group, id);
+        var buffer = new char[bufferSize];
+        var result = masterId.TryFormat(buffer, out var written);
+        Assert.Equal(shouldSucceed, result);
+        if (shouldSucceed)
+            Assert.NotEqual(0, written);
     }
 
-    [Fact]
-    public void TryFormat_BufferTooSmallForEnum_ReturnsFalse()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 1u, 3)]
+    [InlineData(ItemGroup.Weapon, 1u, 6)]
+    [InlineData(ItemGroup.Weapon, 1u, 8)]
+    public void TryFormat_BufferTooSmall_ReturnsFalse(ItemGroup group, uint id, int bufferSize)
     {
-        var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var buffer = new char[3]; // "Weapon" is 6 chars, so 3 is too small
-        var result = id.TryFormat(buffer, out var written);
-        Assert.False(result);
-        Assert.Equal(0, written);
-    }
-
-    [Fact]
-    public void TryFormat_BufferTooSmallForSeparator_ReturnsFalse()
-    {
-        var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var buffer = new char[6]; // Exactly "Weapon" length, no room for '.'
-        var result = id.TryFormat(buffer, out var written);
-        Assert.False(result);
-        Assert.Equal(0, written);
-    }
-
-    [Fact]
-    public void TryFormat_BufferTooSmallForId_ReturnsFalse()
-    {
-        var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var buffer = new char[8]; // "Weapon." = 7 chars, need 4 more for "0001"
-        var result = id.TryFormat(buffer, out var written);
+        var masterId = new MasterId<ItemGroup>(group, id);
+        var buffer = new char[bufferSize];
+        var result = masterId.TryFormat(buffer, out var written);
         Assert.False(result);
         Assert.Equal(0, written);
     }
@@ -165,20 +119,17 @@ public class MasterIdTest
         Assert.Equal("Armor.7", new string(buffer, 0, written));
     }
 
-    [Fact]
-    public void GetHashCode_SameValues_ReturnsSameHash()
+    [Theory]
+    [InlineData(ItemGroup.Weapon, 99u, ItemGroup.Weapon, 99u, true)]
+    [InlineData(ItemGroup.Weapon, 1u, ItemGroup.Armor, 2u, false)]
+    public void GetHashCode_WithSameOrDifferentValues(ItemGroup group1, uint id1, ItemGroup group2, uint id2, bool shouldBeEqual)
     {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 99u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Weapon, 99u);
-        Assert.Equal(id1.GetHashCode(), id2.GetHashCode());
-    }
-
-    [Fact]
-    public void GetHashCode_DifferentValues_ReturnsDifferentHash()
-    {
-        var id1 = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
-        var id2 = new MasterId<ItemGroup>(ItemGroup.Armor, 2u);
-        Assert.NotEqual(id1.GetHashCode(), id2.GetHashCode());
+        var masterId1 = new MasterId<ItemGroup>(group1, id1);
+        var masterId2 = new MasterId<ItemGroup>(group2, id2);
+        if (shouldBeEqual)
+            Assert.Equal(masterId1.GetHashCode(), masterId2.GetHashCode());
+        else
+            Assert.NotEqual(masterId1.GetHashCode(), masterId2.GetHashCode());
     }
 
     [Fact]
