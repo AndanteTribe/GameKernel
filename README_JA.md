@@ -60,8 +60,8 @@ using GameKernel;
 
 public enum ItemGroup { Weapon, Armor, Consumable }
 
-// (group, id) タプルから MasterId を作成する
-MasterId<ItemGroup> id = (ItemGroup.Weapon, 1u);
+// コンストラクタを使って MasterId を生成する（推奨）
+var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 
 // "Weapon.0001" としてフォーマットされる
 string formatted = id.ToString(); // "Weapon.0001"
@@ -71,20 +71,37 @@ var other = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 bool equal = id == other; // true
 ```
 
+`(TGroup, uint)` タプルからの暗黙的変換は、ルックアップメソッドなどの呼び出し側で使う便利な手段です：
+
+```csharp
+// MasterId を引数に取るメソッドへ (group, id) タプルを渡してアイテムを検索する
+Item found = masterTable.Find((ItemGroup.Weapon, 1u));
+```
+
 ### Obscured
+
+推奨パターンは `Obscured<T>` を **private** フィールドに留め、パブリックプロパティで平文の値を公開する方法です：
 
 ```csharp
 using GameKernel;
 
-// 値をメモリ難読化された状態で保存する
-Obscured<int> score = 9999;
+public class PlayerStats
+{
+    private Obscured<int> _hp;
+    private Obscured<float> _attack;
 
-// 元の値を透過的に読み戻す
-int raw = score; // 9999
+    public int Hp
+    {
+        get => (int)_hp;
+        set => _hp = value;
+    }
 
-// 等値比較・順序比較は難読化前の値に対して動作する
-Obscured<int> copy = 9999;
-bool equal = score == copy; // true
+    public float Attack
+    {
+        get => (float)_attack;
+        set => _attack = value;
+    }
+}
 ```
 
 ## MasterId\<TGroup\>
@@ -93,10 +110,11 @@ bool equal = score == copy; // true
 
 - `IEquatable<T>`・`IComparable<T>`・`ISpanFormattable` を実装しています。
 - デフォルトのフォーマットは `"{Group}.{Id:0000}"` です（例：`"Weapon.0001"`）。数値部分のフォーマット指定子を指定することも可能です。
-- `ValueTuple<TGroup, uint>` からの暗黙的変換を提供します。
+- `ValueTuple<TGroup, uint>` からの暗黙的変換は、呼び出し側のリテラルタプルを `MasterId<TGroup>` を引数に取るメソッドへ渡す際の省略記法として提供されています。
 
 ```csharp
-MasterId<ItemGroup> id = (ItemGroup.Armor, 42u);
+// コンストラクタで生成する（推奨）
+var id = new MasterId<ItemGroup>(ItemGroup.Armor, 42u);
 
 // 数値部分のカスタムフォーマット
 string s = id.ToString("00000"); // "Armor.00042"
@@ -106,14 +124,23 @@ string s = id.ToString("00000"); // "Armor.00042"
 
 `Obscured<T>` は、任意のアンマネージド値をインスタンスごとのランダムキーで XOR 暗号化して保持し、生のメモリダンプから実際の値が見えないようにします。
 
-- 真の値は `Value` プロパティまたは `T` への暗黙的変換によりオンデマンドで取得できます。
-- `IEquatable<T>` と `IComparable<T>` は復号化した値に対して動作します。
-- `T` と `Obscured<T>` の間の暗黙的変換によりドロップイン使用が可能です。
+推奨パターンは `Obscured<T>` を **private** フィールドに留め、パブリックプロパティで平文の値を公開する方法です：
 
 ```csharp
-Obscured<float> hp = 100.0f;
-float current = hp; // 100.0f
+public class PlayerStats
+{
+    private Obscured<int> _hp;
+
+    public int Hp
+    {
+        get => (int)_hp;
+        set => _hp = value;
+    }
+}
 ```
+
+- 真の値は `Value` プロパティまたは `T` への暗黙的変換によりオンデマンドで取得できます。
+- `IEquatable<T>` と `IComparable<T>` は復号化した値に対して動作します。
 
 ## MessagePack サポート
 
@@ -132,7 +159,7 @@ var options = MessagePackSerializerOptions.Standard
         GameKernelResolver.Shared,
         MessagePack.Resolvers.StandardResolver.Instance));
 
-MasterId<ItemGroup> id = (ItemGroup.Weapon, 1u);
+MasterId<ItemGroup> id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 byte[] bytes = MessagePackSerializer.Serialize(id, options);
 MasterId<ItemGroup> deserialized = MessagePackSerializer.Deserialize<MasterId<ItemGroup>>(bytes, options);
 ```

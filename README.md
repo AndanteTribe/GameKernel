@@ -60,8 +60,8 @@ using GameKernel;
 
 public enum ItemGroup { Weapon, Armor, Consumable }
 
-// Create a MasterId from a (group, id) tuple
-MasterId<ItemGroup> id = (ItemGroup.Weapon, 1u);
+// Create a MasterId using the constructor (recommended)
+var id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 
 // Format as "Weapon.0001"
 string formatted = id.ToString(); // "Weapon.0001"
@@ -71,20 +71,37 @@ var other = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 bool equal = id == other; // true
 ```
 
+The implicit conversion from a `(TGroup, uint)` tuple is a convenience for call sites such as lookup methods:
+
+```csharp
+// Find an item by passing a (group, id) tuple where a MasterId is expected
+Item found = masterTable.Find((ItemGroup.Weapon, 1u));
+```
+
 ### Obscured
+
+The recommended pattern is to keep `Obscured<T>` as a **private** field and expose the plain value through a public property:
 
 ```csharp
 using GameKernel;
 
-// Store a value in memory-obscured form
-Obscured<int> score = 9999;
+public class PlayerStats
+{
+    private Obscured<int> _hp;
+    private Obscured<float> _attack;
 
-// Read back the original value transparently
-int raw = score; // 9999
+    public int Hp
+    {
+        get => (int)_hp;
+        set => _hp = value;
+    }
 
-// Equality and comparison work on the unobscured value
-Obscured<int> copy = 9999;
-bool equal = score == copy; // true
+    public float Attack
+    {
+        get => (float)_attack;
+        set => _attack = value;
+    }
+}
 ```
 
 ## MasterId\<TGroup\>
@@ -93,10 +110,11 @@ bool equal = score == copy; // true
 
 - Implements `IEquatable<T>`, `IComparable<T>`, and `ISpanFormattable`.
 - Default format is `"{Group}.{Id:0000}"` (e.g. `"Weapon.0001"`), with an optional format specifier to control the numeric format.
-- Provides an implicit conversion from `ValueTuple<TGroup, uint>`.
+- Provides an implicit conversion from `ValueTuple<TGroup, uint>` as a shorthand for call sites (e.g. passing a literal tuple to a method that accepts `MasterId<TGroup>`).
 
 ```csharp
-MasterId<ItemGroup> id = (ItemGroup.Armor, 42u);
+// Construct directly (recommended)
+var id = new MasterId<ItemGroup>(ItemGroup.Armor, 42u);
 
 // Custom format for the numeric part
 string s = id.ToString("00000"); // "Armor.00042"
@@ -106,14 +124,23 @@ string s = id.ToString("00000"); // "Armor.00042"
 
 `Obscured<T>` stores any `unmanaged` value XOR-encrypted with a per-instance random key, making the real value invisible in raw memory dumps.
 
-- The true value is recovered on demand via the `Value` property or implicit conversion to `T`.
-- Supports `IEquatable<T>` and `IComparable<T>` operating on the decrypted value.
-- Implicit conversions between `T` and `Obscured<T>` allow drop-in usage.
+The recommended pattern is to keep `Obscured<T>` as a **private** field and expose the plain value through a public property:
 
 ```csharp
-Obscured<float> hp = 100.0f;
-float current = hp; // 100.0f
+public class PlayerStats
+{
+    private Obscured<int> _hp;
+
+    public int Hp
+    {
+        get => (int)_hp;
+        set => _hp = value;
+    }
+}
 ```
+
+- The true value is recovered on demand via the `Value` property or implicit conversion to `T`.
+- Supports `IEquatable<T>` and `IComparable<T>` operating on the decrypted value.
 
 ## MessagePack Support
 
@@ -132,7 +159,7 @@ var options = MessagePackSerializerOptions.Standard
         GameKernelResolver.Shared,
         MessagePack.Resolvers.StandardResolver.Instance));
 
-MasterId<ItemGroup> id = (ItemGroup.Weapon, 1u);
+MasterId<ItemGroup> id = new MasterId<ItemGroup>(ItemGroup.Weapon, 1u);
 byte[] bytes = MessagePackSerializer.Serialize(id, options);
 MasterId<ItemGroup> deserialized = MessagePackSerializer.Deserialize<MasterId<ItemGroup>>(bytes, options);
 ```
