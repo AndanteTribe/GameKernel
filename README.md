@@ -15,13 +15,13 @@ It provides the following:
 
 1. `MasterId<TGroup>` — A high-performance, comparable, and formattable value type for master data IDs. It combines an enum-based group discriminator with a numeric ID, supporting equality, ordering, and span-based string formatting.
 2. `Obscured<T>` — A struct that protects an unmanaged value from memory inspection by XOR-encrypting it with a randomly generated key. Supports equality, comparison, and transparent implicit conversions.
-3. `AndanteTribe.GameKernel.MessagePack` — An optional NuGet package (namespace: `GameKernel.MessagePack`) providing MessagePack serialization support for `MasterId<TGroup>` and `Obscured<T>`.
+3. `GameKernel.MessagePack` — An optional package providing MessagePack serialization support for `MasterId<TGroup>` and `Obscured<T>`.
 
 ## Installation
 
 ### NuGet Packages
 
-This library requires a framework compatible with .NET Standard 2.1. The packages can be obtained from NuGet.
+This library requires .NET Standard 2.1 or higher. The packages can be obtained from NuGet.
 
 ### .NET CLI
 
