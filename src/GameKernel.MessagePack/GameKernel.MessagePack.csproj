@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Library</OutputType>
+        <Version>1.0.0</Version>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!-- NuGet Packaging -->
+        <PackageId>AndanteTribe.GameKernel.MessagePack</PackageId>
+        <PackageVersion>$(Version)</PackageVersion>
+        <Authors>AndanteTribe</Authors>
+        <Copyright>© AndanteTribe</Copyright>
+        <Description>Shared domain primitives and value objects for engine-agnostic game development.</Description>
+        <PackageProjectUrl>https://github.com/AndanteTribe/GameKernel</PackageProjectUrl>
+        <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MessagePack" Version="3.1.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\GameKernel\GameKernel.csproj" />
+    </ItemGroup>
+
+</Project>

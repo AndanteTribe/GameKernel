@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/GameKernel.MessagePack/GameKernel.MessagePack.csproj" />
+  <Project Path="src/GameKernel/GameKernel.csproj" />
+</Solution>
