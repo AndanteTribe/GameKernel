@@ -59,14 +59,14 @@ public readonly struct Obscured<T> : IEquatable<Obscured<T>>, IComparable<Obscur
     }
 
     /// <summary>
-    /// <see cref="Obscured{T}"/>から<see cref="T"/>への暗黙的変換.
+    /// Implicit conversion from <see cref="Obscured{T}"/> to <typeparamref name="T"/> by XORing the hidden value with the key.
     /// </summary>
     /// <param name="obscured"></param>
     /// <returns></returns>
     public static implicit operator T(Obscured<T> obscured) => Xor(obscured._hiddenValue, obscured._key);
 
     /// <summary>
-    /// <see cref="T"/>から<see cref="Obscured{T}"/>への暗黙的変換.
+    /// Implicit conversion from <typeparamref name="T"/> to <see cref="Obscured{T}"/> by creating a new instance of <see cref="Obscured{T}"/> with the given value.
     /// </summary>
     /// <param name="value"></param>
     /// <returns></returns>

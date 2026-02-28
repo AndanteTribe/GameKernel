@@ -25,7 +25,7 @@ public class GameKernelResolver : IFormatterResolver
 
     private static class FormatterCache<T>
     {
-        public static readonly IMessagePackFormatter<T>? Formatter = Shared.GetFormatter<T>();
+        public static readonly IMessagePackFormatter<T>? Formatter = GetFormatter(typeof(T)) as IMessagePackFormatter<T>;
     }
 
     private static object? GetFormatter(Type t)

@@ -4,7 +4,7 @@ using MessagePack.Formatters;
 namespace GameKernel.MessagePack;
 
 /// <summary>
-/// A MessagePack formatter for the <see cref="MasterId{TGroup}"/> struct,.
+/// A MessagePack formatter for the <see cref="MasterId{TGroup}"/> struct.
 /// </summary>
 /// <typeparam name="TGroup"></typeparam>
 public sealed class MasterIdFormatter<TGroup> : IMessagePackFormatter<MasterId<TGroup>> where TGroup : unmanaged, Enum
