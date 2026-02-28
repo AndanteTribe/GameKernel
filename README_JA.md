@@ -15,13 +15,13 @@
 
 1. `MasterId<TGroup>` — マスターデータ ID のための高パフォーマンスな比較・フォーマット対応の値型です。列挙型ベースのグループ識別子と数値 ID を組み合わせ、等値比較・順序比較・スパンベースの文字列フォーマットをサポートします。
 2. `Obscured<T>` — ランダムに生成されたキーで XOR 暗号化することで、アンマネージド値をメモリ参照から保護する構造体です。等値比較・順序比較・透過的な暗黙的変換をサポートします。
-3. `GameKernel.MessagePack` — `MasterId<TGroup>` と `Obscured<T>` の MessagePack シリアライズをサポートするオプションのパッケージです。
+3. `AndanteTribe.GameKernel.MessagePack` — `MasterId<TGroup>` と `Obscured<T>` の MessagePack シリアライズをサポートするオプションの NuGet パッケージです（名前空間：`GameKernel.MessagePack`）。
 
 ## インストール
 
 ### NuGet パッケージ
 
-このライブラリには .NET Standard 2.1 以上が必要です。パッケージは NuGet から取得できます。
+このライブラリは `netstandard2.1` をターゲットとしており、`netstandard2.1` と互換性のある .NET 実装（.NET 6 以降など）が必要です。パッケージは NuGet から取得できます。
 
 ### .NET CLI
 
@@ -148,7 +148,7 @@ public class PlayerStats
 
 - `GameKernelResolver` — `MasterId<TGroup>` と `Obscured<T>` のフォーマッターを解決する `IFormatterResolver`。
 - `MasterIdFormatter<TGroup>` — `MasterId<TGroup>` のシリアライズ・デシリアライズを行う `IMessagePackFormatter<MasterId<TGroup>>`。
-- `ObscuredFormatter<T>` — `Obscured<T>` のシリアライズ・デシリアライズを行う `IMessagePackFormatter<Obscured<T>>`（平文の値としてシリアライズされます）。
+- `ObscuredFormatter<T>` — `Obscured<T>` のシリアライズ・デシリアライズを行う `IMessagePackFormatter<Obscured<T>>`（平文の値を 1 要素配列としてシリアライズします）。
 
 ```csharp
 using MessagePack;
