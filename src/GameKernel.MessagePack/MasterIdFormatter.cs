@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 using MessagePack.Formatters;
 
 namespace GameKernel.MessagePack;
